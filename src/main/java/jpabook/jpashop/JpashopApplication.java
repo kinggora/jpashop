@@ -10,7 +10,6 @@ public class JpashopApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(JpashopApplication.class, args);
-		String str = new String("str");
 
 	}
 
