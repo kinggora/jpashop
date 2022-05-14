@@ -21,19 +21,56 @@ public class Order {
     @ManyToOne(fetch = FetchType.LAZY)
     //연관관계의 주인. 외래키 매핑 -> 해당 객체 참조
     @JoinColumn(name = "member_id")
-    private Member member;
+    private Member member; //주문회원
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL) //주문 1:주문상품 다수
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL) //주문 1:배송지 1
     @JoinColumn(name = "delivery_id")
-    private Delivery delivery;
+    private Delivery delivery; //배송정보
 
-    private LocalDateTime orderDate;
+    private LocalDateTime orderDate; //주문시간
 
     @Enumerated(EnumType.STRING)
-    private OrderStatus status;
+    private OrderStatus status; //주문상태 [ORDER, CANCEL]
+
+    //== 생성 메서드 ==
+    public static Order createOrder(Member member, Delivery delivery, OrderItem... orderItems){
+        Order order = new Order();
+        order.setMember(member);
+        order.setDelivery(delivery);
+        for(OrderItem orderItem : orderItems){
+            order.addOrderItem(orderItem);
+        }
+        order.setOrderDate(LocalDateTime.now());
+        order.setStatus(OrderStatus.ORDER);
+        return order;
+    }
+
+    //== 비지니스 로직 ==
+    /** 주문 취소 **/
+    public void cancel(){
+        if(delivery.getStatus() == DeliveryStatus.COMP){
+            throw new IllegalStateException("이미 배송완료된 상품은 취소가 불가합니다.");
+        }
+        setStatus(OrderStatus.CANCEL);
+        for(OrderItem orderItem : orderItems){
+            orderItem.cancel();
+        }
+    }
+
+    //== 조회 로직 ==
+    /** 전체 주문 가격 조회 **/
+    public int getTotalPrice(){
+        int totalPrice = 0;
+        for(OrderItem orderItem : orderItems){
+            //OrderItem을 뜯어서 "구매 가격*수량" 을 가져온다.
+            totalPrice += orderItem.getTotalPrice();
+        }
+        return totalPrice;
+    }
+
 
     //== 연관관계 메서드 ==
     public void setMember(Member member){
@@ -41,7 +78,7 @@ public class Order {
         member.getOrders().add(this);
     }
 
-    public void setOrderItem(OrderItem orderItem){
+    public void addOrderItem(OrderItem orderItem){
         orderItems.add(orderItem);
         orderItem.setOrder(this);
     }
