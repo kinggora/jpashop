@@ -24,6 +24,7 @@ public class Member {
     private Address address;
 
     @OneToMany(mappedBy = "member") //멤버 1:주문 다수
+    @JsonIgnore
     private List<Order> orders = new ArrayList<>();
 
     public void changeName(String name){
